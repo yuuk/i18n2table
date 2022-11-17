@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Head from 'next/head';
 import JSON5 from 'json5';
 import { map } from 'lodash-es';
+import Split from 'react-split';
+import CustomJSONEditor from '../components/editor';
 
 function getType(obj: any) {
     var type = Object.prototype.toString.call(obj);
@@ -17,7 +19,7 @@ function jsonFrom(input: string) {
     try {
         result = JSON5.parse(string);
     } catch (err) {
-        console.error(err);
+        console.log(err);
     }
     return result;
 }
@@ -31,11 +33,13 @@ function arrayFrom(json: any) {
                 var type = getType(next[0]);
                 var scalar =
                     type == 'number' || type == 'string' || type == 'boolean' || type == 'null';
-                if (!scalar) return next;
+                if (!scalar) {
+                    return next;
+                }
             }
         }
         if (getType(next) == 'object') {
-            for (var key in next) {
+            for (const key in next) {
                 queue.push(next[key]);
             }
         }
@@ -70,11 +74,11 @@ function formatSource(input: string) {
 }
 
 export default function Home() {
+    const [namespace, setNamespace] = useState('');
     const [source, setSource] = useState('');
     const [output, setOutput] = useState({});
 
-    const handleChange = (e: any) => {
-        const input = e.target.value;
+    const handleChange = (input: string) => {
         setSource(input);
         const result = formatSource(input);
         setOutput(result);
@@ -88,31 +92,41 @@ export default function Home() {
                 <link rel='icon' href='/favicon.ico' />
             </Head>
 
-            <div className='flex'>
+            <Split className='flex'>
                 <div className='h-screen w-1/2 border'>
-                    <textarea
-                        className='w-full h-full p-4 resize-none outline-none'
-                        placeholder='请输入JSON'
-                        value={source}
-                        onChange={handleChange}
+                    <input
+                        className='block w-full py-3 px-3 text-base text-slate-900 placeholder:text-slate-300 border outline-none'
+                        type='text'
+                        placeholder='输入 namespace'
+                        value={namespace}
+                        onChange={(e) => setNamespace(e.target.value)}
                     />
+                    <CustomJSONEditor value={jsonFrom(source)} onChange={handleChange} />
                 </div>
 
                 <div className='h-screen w-1/2 border overflow-y-auto'>
-                    <table className='h-full'>
+                    <table className='w-full h-auto text-center'>
+                        <thead>
+                            <tr>
+                                <th className='w-1/2 border border-slate-300'>key</th>
+                                <th className='w-1/2 border border-slate-300'>参考文案</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {map(output, (v, k) => {
                                 return (
                                     <tr key={k}>
-                                        <td className='border border-slate-300'>{k}</td>
-                                        <td className='border border-slate-300'>{v}</td>
+                                        <td className='w-1/2 border border-slate-300'>
+                                            {namespace ? `${namespace}/${k}` : k}
+                                        </td>
+                                        <td className='w-1/2 border border-slate-300'>{v}</td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Split>
         </>
     );
 }
