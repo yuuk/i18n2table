@@ -27,7 +27,6 @@ const CustomJSONEditor: React.FC<Props> = (props) => {
 
     useEffect(() => {
         if (value && editorRef.current) {
-            console.error(value);
             editorRef.current.update(value);
         }
     }, [value]);
