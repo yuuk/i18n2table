@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import JSON5 from 'json5';
 import { map } from 'lodash-es';
 import Split from 'react-split';
-import CustomJSONEditor from '../components/editor';
+
+const CustomJSONEditor = dynamic(() => import('../components/editor'), { ssr: false });
 
 function getType(obj: any) {
     var type = Object.prototype.toString.call(obj);
@@ -11,15 +13,15 @@ function getType(obj: any) {
 }
 
 function jsonFrom(input: string) {
-    const string = input.trim();
-    if (!string) {
+    const content = input.trim();
+    if (!content) {
         return;
     }
     let result = null;
     try {
-        result = JSON5.parse(string);
+        result = JSON5.parse(content);
     } catch (err) {
-        console.log(err);
+        return result;
     }
     return result;
 }
@@ -74,15 +76,43 @@ function formatSource(input: string) {
 }
 
 export default function Home() {
+    const tableRef = useRef(null);
     const [namespace, setNamespace] = useState('');
     const [source, setSource] = useState('');
     const [output, setOutput] = useState({});
+    const [copyResult, setCopyResult] = useState('');
 
     const handleChange = (input: string) => {
         setSource(input);
         const result = formatSource(input);
         setOutput(result);
     };
+
+    const copyTable = () => {
+        if (tableRef.current) {
+            try {
+                const element = tableRef.current;
+                const range = document.createRange();
+                const selection = window.getSelection()!;
+                range.selectNode(element);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('copy');
+                setCopyResult('复制成功，可以粘贴到Excel文档中！');
+            } catch (e) {
+                console.error(e);
+                setCopyResult('复制失败，请手动复制！');
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (copyResult !== '') {
+            setTimeout(() => {
+                setCopyResult('');
+            }, 3000);
+        }
+    }, [copyResult]);
 
     return (
         <>
@@ -93,19 +123,31 @@ export default function Home() {
             </Head>
 
             <Split className='flex'>
-                <div className='h-screen w-1/2 border'>
-                    <input
-                        className='block w-full py-3 px-3 text-base text-slate-900 placeholder:text-slate-300 border outline-none'
-                        type='text'
-                        placeholder='输入 namespace'
-                        value={namespace}
-                        onChange={(e) => setNamespace(e.target.value)}
-                    />
+                <div className='h-screen flex flex-col w-1/2'>
+                    <div className='py-3'>
+                        <input
+                            className='block w-full leading-6 text-slate-900 placeholder-slate-400 rounded-md p-2 ring-1 ring-slate-400'
+                            type='text'
+                            placeholder='输入namespace，namespace会自动拼接到所有key的前面'
+                            value={namespace}
+                            onChange={(e) => setNamespace(e.target.value)}
+                        />
+                    </div>
                     <CustomJSONEditor value={jsonFrom(source)} onChange={handleChange} />
                 </div>
 
-                <div className='h-screen w-1/2 border overflow-y-auto'>
-                    <table className='w-full h-auto text-center'>
+                <div className='h-screen w-1/2 overflow-y-auto'>
+                    <div className='flex items-center py-3'>
+                        <button
+                            type='button'
+                            className='h-10 px-6 font-semibold rounded-md bg-black text-white'
+                            onClick={copyTable}
+                        >
+                            复制表格
+                        </button>
+                        <div className='pl-2'>{copyResult}</div>
+                    </div>
+                    <table className='w-full h-auto text-center' ref={tableRef}>
                         <thead>
                             <tr>
                                 <th className='w-1/2 border border-slate-300'>key</th>
