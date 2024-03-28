@@ -4,6 +4,8 @@ import { appWithTranslation } from 'next-i18next';
 
 import { GlobalContextProvider } from '@/components';
 
+import nextI18NextConfig from '../../next-i18next.config.js';
+
 import '../styles/globals.css';
 
 function App({ Component, pageProps }: AppProps) {
@@ -14,16 +16,20 @@ function App({ Component, pageProps }: AppProps) {
     );
 }
 
-App.getInitialProps = async (context: AppContext) => {
-    console.error('app.getInitialProps');
+// App.getInitialProps = async (context: AppContext) => {
+//     console.error('app.getInitialProps');
 
-    const ctx = await NextApp.getInitialProps(context);
+//     const ctx = await NextApp.getInitialProps(context);
 
-    return {
-        ...ctx,
-        a: 1,
-        b: 2,
-    };
-};
+//     const dataFromApp = {
+//         a: 1,
+//         b: 2,
+//     };
 
-export default appWithTranslation(App);
+//     return {
+//         ...ctx,
+//         dataFromApp,
+//     };
+// };
+
+export default appWithTranslation(App, nextI18NextConfig);

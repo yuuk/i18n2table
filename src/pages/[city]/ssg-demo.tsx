@@ -1,6 +1,7 @@
 import React from 'react';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
+import Head from 'next/head';
 import type { GetStaticProps, GetStaticPropsContext } from 'next';
 
 import { Header } from '@/components';
@@ -11,6 +12,9 @@ function SSGPage(props: any) {
 
     return (
         <>
+            <Head>
+                <title>ssg page</title>
+            </Head>
             <Header />
             <p>ssg page</p>
             <p>多语言：{t('common:test')}</p>
